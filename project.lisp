@@ -114,50 +114,78 @@
 ;
 ; => 4173
 
+;; list of integers
 (defdata loi (listof int))
-(defdata maybe-nat (oneof nat nil))#|ACL2s-ToDo-Line|#
-
 
 ;; convert the given integer to a list with each element representing its corresponding digit
-(definec int-to-list (n :int) :tl
-  )
+;(definec int-to-list (n :int) :tl
+;  )
 
 ;; multiplies elements whose indicies that add up to the magnitude equal to that of 10 raised
 ;; to a power n + 2 (return a single number)
-(definec multiply (l1 :loi l2 :loi index :int) :int
-  )
+;(definec multiply (l1 :loi l2 :loi index :int) :int
+;  )
 
 ;; run multiply recursively and add the results of multiplying to their correct places
-(definec placeholder (l1 :loi l2 :loi) :loi
-  ; calls multiply()
-  
-  )
+;(definec placeholder (l1 :loi l2 :loi) :loi
+;  ; calls multiply()
+;  )
 
 ;; process all carries
-(definec carry (l :loi) :loi
-  )
-
-;; zero-based indexOf (return nil if the element does not appear in the list)
-(definec index-of (l :loi n :int) :maybe-nat
+(definec process-carry (l :loi carry :nat) :loi
+  ;; make (+ (car l) carry) into a local variable
   (cond
-   ((endp l) 10000000000)
-   (if (equal (car l) n)
-     0
-     (1+ (index-of (cdr l) n)))))
+   ((endp l) (if (equal carry 0)
+               nil
+               (list carry)))
+   (t (if (<= (+ (car l) carry) 9)
+        (cons (+ (car l) carry)
+              (process-carry (cdr l) 0))
+        (cons (mod (+ (car l) carry) 10)
+              (process-carry (cdr l) (floor (/ (+ (car l) carry) 10) 1)))))))
+
+;(check= (process-carry '() 0) nil)
+(check= (process-carry '(1 2 3) 0) '(1 2 3))
+(check= (process-carry '(3 6 11) 0) '(3 6 1 1)); 3 7 1
+(check= (process-carry '(1 3 12 5 11) 0) '(1 3 2 6 1 1)) ; 1 4 2 6 1
+(check= (process-carry '(21 35 72 53 13) 0) '(1 7 5 0 9 1))#|ACL2s-ToDo-Line|#
+ ; 2 5 2 7 4 3
+
+;; zero-based indexOf
+(definec index-of (l :loi n :int) :nat
+  (cond
+   ((endp l) 10000) ; return the "sentinel" value if the given element does not appear
+   (t (if (equal (car l) n)
+        0
+        (1+ (index-of (cdr l) n))))))
+
+(check= (index-of '() 1) 10000)
+(check= (index-of '(1 2 3 4 5) 1) 0)
+(check= (index-of '(1 2 3 4) 3) 2)
+(check= (index-of '(1 2 3 4 5) 5) 4)
+(check= (index-of '(1 2 3 4 5 6) 7) 10006)
 
 ;; get the element at the given index (int-at, similar to charAt for strings)
-(definec get (l :loi index :nat) :int
-  )
+(definec int-at (l :loi index :nat) :int
+  (cond
+   ((endp l) 10000) ; return the "sentinel" value if index out of bounds
+   ((zerop index) (car l))
+   (t (int-at (cdr l) (1- index)))))
+
+(check= (int-at '() 1) 10000)
+(check= (int-at '(1 2 3 4 5) 0) 1)
+(check= (int-at '(1 2 3 4 5) 1) 2)
+(check= (int-at '(1 2 3 4 5) 4) 5)
+(check= (int-at '(1 2 3 4 5) 6) 10000)
 
 ;(definec japanese-mult-acc (i1 :int i2 :int acc :int) :int
 ;  )
 
 ;; main function
 (definec japanese-mult (i1 :int i2 :int) :int
-  ; (local (l1 = int-to-list(i1)
-  ;         l2 = int-to-list(i2)))
-  ; carry(placeholder(l1, l2))
-  )
+  ;; (l1 (int-to-list i1))
+  ;; (l2 (int-to-list i2))
+  (carry (placeholder (int-to-list i1) (int-to-list i2))))
 
 
 
