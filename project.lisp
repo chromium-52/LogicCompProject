@@ -114,15 +114,40 @@
 ;
 ; => 4173
 
+#|
+87 * 34 = 2958
+i1 = 87
+i2 = 34
+l1 = (int-to-list 87) = (list 7 8)
+l2 = (int-to-list 34) = (list 4 3)
+(placeholder l1 l2) = calls multiply recursively 
+         (multiply l1 l2 0) = 28 (0,0)
+         (multiply l1 l2 1) = 32 + 21 = 53 1 (1,0) + (0,1)
+         (multiply l1 l2 2) = 24 (1,1) bc no index equalling to 2
+         = (list 28 53 24)
+(process-carry (list 28 53 24)) = (list 8 5 9 2)
+(reverse (list 8 5 9 2)) = (list (2 9 5 8)
+(list-to-int (list (2 9 5 8)) = 2958
+
+|#
 ;; list of integers
 (defdata loi (listof int))
 
 ;; convert the given integer to a list with each element representing its corresponding digit
-;(definec int-to-list (n :int) :tl
-;  )
+(definec int-to-list (n :nat) :loi
+  (cond 
+   ((<= n 9) (list n))
+   (t (cons (mod n 10) (int-to-list (floor (/ n 10) 1))))))
+
+(check= (int-to-list 0) (list 0))
+(check= (int-to-list 10) (list 0 1))
+(check= (int-to-list 256) (list 6 5 2))
+(check= (int-to-list 6) (list 6))
+
+
 
 ;; multiplies elements whose indicies that add up to the magnitude equal to that of 10 raised
-;; to a power n + 2 (return a single number)
+;; to a power n (return a single number)
 ;(definec multiply (l1 :loi l2 :loi index :int) :int
 ;  )
 
@@ -148,8 +173,7 @@
 (check= (process-carry '(1 2 3) 0) '(1 2 3))
 (check= (process-carry '(3 6 11) 0) '(3 6 1 1)); 3 7 1
 (check= (process-carry '(1 3 12 5 11) 0) '(1 3 2 6 1 1)) ; 1 4 2 6 1
-(check= (process-carry '(21 35 72 53 13) 0) '(1 7 5 0 9 1))#|ACL2s-ToDo-Line|#
- ; 2 5 2 7 4 3
+(check= (process-carry '(21 35 72 53 13) 0) '(1 7 5 0 9 1)) ; 2 5 2 7 4 3
 
 ;; zero-based indexOf
 (definec index-of (l :loi n :int) :nat
@@ -164,6 +188,7 @@
 (check= (index-of '(1 2 3 4) 3) 2)
 (check= (index-of '(1 2 3 4 5) 5) 4)
 (check= (index-of '(1 2 3 4 5 6) 7) 10006)
+
 
 ;; get the element at the given index (int-at, similar to charAt for strings)
 (definec int-at (l :loi index :nat) :int
@@ -189,7 +214,10 @@
 
 
 
+(defconst *japanese-mult-contract-theorem*
+  '(implies (and (natp x) (natp y)) (equal (japanese-mult x y) (* x y))))
 
+(make-event `(thm ,*japanese-mult-contract-theorem*))
 
 
 
