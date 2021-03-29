@@ -1,3 +1,68 @@
+; ****************** BEGIN INITIALIZATION FOR ACL2s MODE ****************** ;
+; (Nothing to see here!  Your actual file is after this initialization code);
+(make-event
+ (er-progn
+  (set-deferred-ttag-notes t state)
+  (value '(value-triple :invisible))))
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading the CCG book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/ccg/ccg" :uncertified-okp nil :dir :system :ttags ((:ccg)) :load-compiled-file nil);v4.0 change
+
+;Common base theory for all modes.
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s base theory book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/base-theory" :dir :system :ttags :all)
+
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/custom" :dir :system :ttags :all)
+
+;; guard-checking-on is in *protected-system-state-globals* so any
+;; changes are reverted back to what they were if you try setting this
+;; with make-event. So, in order to avoid the use of progn! and trust
+;; tags (which would not have been a big deal) in custom.lisp, I
+;; decided to add this here.
+;; 
+;; How to check (f-get-global 'guard-checking-on state)
+;; (acl2::set-guard-checking :nowarn)
+(acl2::set-guard-checking :all)
+
+;Settings common to all ACL2s modes
+(acl2s-common-settings)
+;(acl2::xdoc acl2s::defunc) ;; 3 seconds is too much time to spare -- commenting out [2015-02-01 Sun]
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem loading ACL2s customizations book.~%Please choose \"Recertify ACL2s system books\" under the ACL2s menu and retry after successful recertification.") (value :invisible))
+(include-book "acl2s/acl2s-sigs" :dir :system :ttags :all)
+
+#+acl2s-startup (er-progn (assign fmt-error-msg "Problem setting up ACL2s mode.") (value :invisible))
+
+(acl2::xdoc acl2s::defunc) ; almost 3 seconds
+
+; Non-events:
+;(set-guard-checking :none)
+
+(set-inhibit-warnings! "Invariant-risk" "theory")
+
+(in-package "ACL2")
+(redef+)
+(defun print-ttag-note (val active-book-name include-bookp deferred-p state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp deferred-p))
+  state)
+
+(defun print-deferred-ttag-notes-summary (state)
+  (declare (xargs :stobjs state))
+  state)
+
+(defun notify-on-defttag (val active-book-name include-bookp state)
+  (declare (xargs :stobjs state)
+	   (ignore val active-book-name include-bookp))
+  state)
+(redef-)
+
+(acl2::in-package "ACL2S")
+
+; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
+;$ACL2s-SMode$;ACL2s
 ;; Proving Japanese multiplication using ACL2s theorem prover
 
 ; Encode the two integers into a format that ACL2s can understand
@@ -79,6 +144,7 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (int-to-list 256) (list 6 5 2))
 (check= (int-to-list 15468) (list 8 6 4 5 1))
 
+
 ;; convert the given loi to an integer
 (definec list-to-int (l :loi) :int
   (cond
@@ -125,17 +191,16 @@ l2 = (int-to-list 34) = (list 4 3)
 (definec multiply (l1 :loi l2 :loi index :nat acc :nat) :int
   :ic (>= index acc)
   (cond
-   ((or (zerop acc) (<= (len l2) (1- acc))) (* (int-at l1 acc) (int-at l2 (- index acc))))
+   ((or (zerop acc) (< (len l2) (1- acc))) (* (int-at l1 acc) (int-at l2 (- index acc))))
    (t (+ (* (int-at l1 acc) (int-at l2 (- index acc))) (multiply l1 l2 index (1- acc))))))
 
 (check= (multiply (list 7 8) (list 4 3) 0 0) 28) ;; (7 * 4)           ;; (0 * 0)           ;; 2 - 2 = 0
 (check= (multiply (list 7 8) (list 4 3) 1 1) 53) ;; (8 * 4) + (7 * 3) ;; (1 * 0) + (0 * 1) ;; 2 - 1 = 1
 (check= (multiply (list 7 8) (list 4 3) 2 2) 24) ;; (8 * 3)           ;; (1 * 1)           ;; 2 - 0 = 2
-(check= (multiply (list 2 5 4) (list 3 2) 0 0) 6)#|ACL2s-ToDo-Line|#
-  ;; (2 * 3)           ;; (0 * 0)           ;; 3 - 3 = 0
+(check= (multiply (list 2 5 4) (list 3 2) 0 0) 6)  ;; (2 * 3)           ;; (0 * 0)           ;; 3 - 3 = 0
 (check= (multiply (list 2 5 4) (list 3 2) 1 1) 19) ;; (2 * 2) + (5 * 3) ;; (0 * 1) + (1 * 0) ;; 3 - 2 = 1
 (check= (multiply (list 2 5 4) (list 3 2) 2 2) 22) ;; (4 * 3) + (5 * 2) ;; (2 * 0) + (1 * 1) ;; 3 - 1 = 2
-;(check= (multiply (list 2 5 4) (list 3 2) 3 3) 8)  ;; (4 * 2)           ;; (2 * 1)           ;; 3 - 0 = 3
+(check= (multiply (list 2 5 4) (list 3 2) 3 3) 8)  ;; (4 * 2)           ;; (2 * 1)           ;; 3 - 0 = 3
 
 ;; run multiply recursively and add the results of multiplying to their correct places
 (definec rec-multiply (l1 :loi l2 :loi l1-length :nat) :loi
@@ -145,7 +210,7 @@ l2 = (int-to-list 34) = (list 4 3)
             (rec-multiply l1 l2 (1- l1-length))))))
 
 (check= (rec-multiply (list 7 8) (list 4 3) 2) (list 24 53 28)) ;; but want (list 24 53 28)
-;(check= (rec-multiply (list 2 5 4) (list 3 2)) 3) (list 8 22 19 6))
+(check= (rec-multiply (list 2 5 4) (list 3 2) 3) (list 8 22 19 6))
 
 ;; process all carries
 (definec process-carry (l :loi carry :nat) :loi
@@ -170,17 +235,20 @@ l2 = (int-to-list 34) = (list 4 3)
 (definec japanese-mult (i1 :nat i2 :nat) :int
   ;; (l1 (int-to-list i1))
   ;; (l2 (int-to-list i2))
-  (list-to-int (process-carry (rec-multiply (int-to-list i1)
+  (list-to-int (process-carry (reverse (rec-multiply (int-to-list i1)
                                             (int-to-list i2)
-                                            (len (int-to-list i1)))
+                                            (len (int-to-list i1))))
                               0)))
 
-;(check= (japanese-mult 87 34) 2958)
+(check= (japanese-mult 87 34) 2958)
+(check= (japanese-mult 254 54) 13716)
+(check= (japanese-mult 12 3) 36)#|ACL2s-ToDo-Line|#
 
-(defconst *japanese-mult-contract-theorem*
-  '(implies (and (natp x) (natp y)) (equal (japanese-mult x y) (* x y))))
+(check= (japanese-mult 73 247) 20002)
 
-(make-event `(thm ,*japanese-mult-contract-theorem*))
+(thm
+  (implies (and (natp x) (natp y)) (equal (japanese-mult x y) (* x y))))
+
 
 
 
