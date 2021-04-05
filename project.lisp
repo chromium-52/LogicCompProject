@@ -131,8 +131,7 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (multiply (list 7 8) (list 4 3) 0 0) 28) ;; (7 * 4)           ;; (0 * 0)           ;; 2 - 2 = 0
 (check= (multiply (list 7 8) (list 4 3) 1 1) 53) ;; (8 * 4) + (7 * 3) ;; (1 * 0) + (0 * 1) ;; 2 - 1 = 1
 (check= (multiply (list 7 8) (list 4 3) 2 2) 24) ;; (8 * 3)           ;; (1 * 1)           ;; 2 - 0 = 2
-(check= (multiply (list 2 5 4) (list 3 2) 0 0) 6)#|ACL2s-ToDo-Line|#
-  ;; (2 * 3)           ;; (0 * 0)           ;; 3 - 3 = 0
+(check= (multiply (list 2 5 4) (list 3 2) 0 0) 6)  ;; (2 * 3)           ;; (0 * 0)           ;; 3 - 3 = 0
 (check= (multiply (list 2 5 4) (list 3 2) 1 1) 19) ;; (2 * 2) + (5 * 3) ;; (0 * 1) + (1 * 0) ;; 3 - 2 = 1
 (check= (multiply (list 2 5 4) (list 3 2) 2 2) 22) ;; (4 * 3) + (5 * 2) ;; (2 * 0) + (1 * 1) ;; 3 - 1 = 2
 ;(check= (multiply (list 2 5 4) (list 3 2) 3 3) 8)  ;; (4 * 2)           ;; (2 * 1)           ;; 3 - 0 = 3
@@ -177,13 +176,11 @@ l2 = (int-to-list 34) = (list 4 3)
 
 ;(check= (japanese-mult 87 34) 2958)
 
-(defconst *japanese-mult-contract-theorem*
-  '(implies (and (natp x) (natp y)) (equal (japanese-mult x y) (* x y))))
+(defthm japanese-multiplication
+  (implies (and (natp x) (natp y))
+           (equal (japanese-mult x y) (* x y))))
 
-(make-event `(thm ,*japanese-mult-contract-theorem*))
+;(defconst *japanese-mult-contract-theorem*
+;  '(implies (and (natp x) (natp y)) (equal (japanese-mult x y) (* x y))))
 
-
-
-
-
-
+;(make-event `(thm ,*japanese-mult-contract-theorem*))

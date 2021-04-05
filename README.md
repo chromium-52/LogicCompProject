@@ -1,4 +1,4 @@
-# LogicCompProject
+#  Logic and Computation Final Project
 
 Spring 2021 semester CS2800 Logic and Computation Final Project
 
