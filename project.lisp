@@ -118,14 +118,12 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (int-at '(1 2 3 4 5) 4) 5)
 (check= (int-at '(1 2 3 4 5) 6) 0)
 
-
-
 ;; multiply elements whose indicies that add up to the magnitude equal to that of 10 raised
 ;; to a power of the given index
 (definec multiply (l1 :loi l2 :loi index :nat acc :nat) :int
   :ic (>= index acc)
   (cond
-   ((or (zerop acc) (<= (len l2) (1- acc))) (* (int-at l1 acc) (int-at l2 (- index acc))))
+   ((or (zerop acc) (< (len l2) (1- acc))) (* (int-at l1 acc) (int-at l2 (- index acc))))
    (t (+ (* (int-at l1 acc) (int-at l2 (- index acc))) (multiply l1 l2 index (1- acc))))))
 
 (check= (multiply (list 7 8) (list 4 3) 0 0) 28) ;; (7 * 4)           ;; (0 * 0)           ;; 2 - 2 = 0
@@ -134,7 +132,7 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (multiply (list 2 5 4) (list 3 2) 0 0) 6)  ;; (2 * 3)           ;; (0 * 0)           ;; 3 - 3 = 0
 (check= (multiply (list 2 5 4) (list 3 2) 1 1) 19) ;; (2 * 2) + (5 * 3) ;; (0 * 1) + (1 * 0) ;; 3 - 2 = 1
 (check= (multiply (list 2 5 4) (list 3 2) 2 2) 22) ;; (4 * 3) + (5 * 2) ;; (2 * 0) + (1 * 1) ;; 3 - 1 = 2
-;(check= (multiply (list 2 5 4) (list 3 2) 3 3) 8)  ;; (4 * 2)           ;; (2 * 1)           ;; 3 - 0 = 3
+(check= (multiply (list 2 5 4) (list 3 2) 3 3) 8)  ;; (4 * 2)           ;; (2 * 1)           ;; 3 - 0 = 3
 
 ;; run multiply recursively and add the results of multiplying to their correct places
 (definec rec-multiply (l1 :loi l2 :loi l1-length :nat) :loi
@@ -144,7 +142,7 @@ l2 = (int-to-list 34) = (list 4 3)
             (rec-multiply l1 l2 (1- l1-length))))))
 
 (check= (rec-multiply (list 7 8) (list 4 3) 2) (list 24 53 28)) ;; but want (list 24 53 28)
-;(check= (rec-multiply (list 2 5 4) (list 3 2)) 3) (list 8 22 19 6))
+(check= (rec-multiply (list 2 5 4) (list 3 2) 3) (list 8 22 19 6))
 
 ;; process all carries
 (definec process-carry (l :loi carry :nat) :loi
@@ -169,12 +167,15 @@ l2 = (int-to-list 34) = (list 4 3)
 (definec japanese-mult (i1 :nat i2 :nat) :int
   ;; (l1 (int-to-list i1))
   ;; (l2 (int-to-list i2))
-  (list-to-int (process-carry (rec-multiply (int-to-list i1)
+  (list-to-int (process-carry (reverse (rec-multiply (int-to-list i1)
                                             (int-to-list i2)
-                                            (len (int-to-list i1)))
+                                            (len (int-to-list i1))))
                               0)))
 
-;(check= (japanese-mult 87 34) 2958)
+(check= (japanese-mult 87 34) 2958)
+(check= (japanese-mult 254 54) 13716)
+(check= (japanese-mult 12 3) 36)
+(check= (japanese-mult 73 247) 20002)
 
 (defthm japanese-multiplication
   (implies (and (natp x) (natp y))
