@@ -217,16 +217,16 @@ l2 = (int-to-list 34) = (list 4 3)
 
 ;; process all carries
 (definec process-carry (l :loi carry :nat) :loi
-  (local ((x (+ (car l) carry)));; make (+ (car l) carry) into a local variable
-         (cond
-          ((endp l) (if (equal carry 0)
-                      nil
-                      (list carry)))
-          (t (if (<= (+ (car l) carry) 9)
-               (cons (+ (car l) carry)
-                     (process-carry (cdr l) 0))
-               (cons (mod (+ (car l) carry) 10)
-                     (process-carry (cdr l) (floor (/ (+ (car l) carry) 10) 1))))))))
+  ;; make (+ (car l) carry) into a local variable
+  (cond
+   ((endp l) (if (equal carry 0)
+               nil
+               (list carry)))
+   (t (if (<= (+ (car l) carry) 9)
+        (cons (+ (car l) carry)
+              (process-carry (cdr l) 0))
+        (cons (mod (+ (car l) carry) 10)
+              (process-carry (cdr l) (floor (/ (+ (car l) carry) 10) 1)))))))
 
 (check= (process-carry '() 0) nil)
 (check= (process-carry '(1 2 3) 0) '(1 2 3))
@@ -250,7 +250,8 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (japanese-mult 1004 107) 107428)
 (check= (japanese-mult 21114 10) 211140)
 
-(set-gag-mode nil)
+(set-gag-mode nil)#|ACL2s-ToDo-Line|#
+
 
 (defthm japanese-multiplication
   (implies (and (natp x) (natp y))
