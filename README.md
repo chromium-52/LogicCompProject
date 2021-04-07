@@ -9,3 +9,4 @@ Proving Japanese multiplication using ACL2s theorem prover
 2. Open the file `project.lisp` in Eclipse with ACL2
 3. Ensure that ACL2 session mode is enabled
 4. Start a new session
+5. Run the entire file up to and including the line beginning with `defthm japanese-multiplication`
