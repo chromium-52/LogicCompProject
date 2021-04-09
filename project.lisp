@@ -237,7 +237,6 @@ l2 = (int-to-list 34) = (list 4 3)
 
 ;; main function
 (definec japanese-mult (i1 :nat i2 :nat) :nat
-  :ic (natp (1- (+ (len (int-to-list i1)) (len (int-to-list i2)))))
   (list-to-int (process-carry (reverse (rec-multiply (int-to-list i1)
                                                      (int-to-list i2)
                                                      (1+ (max (len (int-to-list i1)) (len (int-to-list i2))))))
@@ -248,10 +247,18 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (japanese-mult 12 3) 36)
 (check= (japanese-mult 73 247) 18031)
 (check= (japanese-mult 1004 107) 107428)
-(check= (japanese-mult 21114 10) 211140)#|ACL2s-ToDo-Line|#
+(check= (japanese-mult 21114 10) 211140)
 
+(set-gag-mode nil)
 
-;(set-gag-mode nil)
+(defthm int-to-list-never-empty
+  (implies (and (natp x) (natp y))
+           (and (int-to-list x) (int-to-list y))))
+
+(defthm list-of-nats
+  (implies (and (natp x) (natp y))
+           (and (natp (car (int-to-list x))) (natp (car (int-to-list y))))))#|ACL2s-ToDo-Line|#
+
 
 (defthm japanese-multiplication
   (implies (and (natp x) (natp y))
@@ -271,15 +278,96 @@ this rule is unlikely ever to be used.
 
 
 << Starting proof tree logging >>
+
+By the simple :definition NATP we reduce the conjecture to
+
 Goal'
+(IMPLIES (AND (INTEGERP X)
+              (<= 0 X)
+              (INTEGERP Y)
+              (<= 0 Y))
+         (EQUAL (JAPANESE-MULT X Y) (* X Y))).
 
-Forcing Round 1 is pending (caused first by Goal').
+This forcibly simplifies, using the :compound-recognizer rules 
+ACL2::NAT-LISTP-IMPLIES-TLP and ACL2::NATP-COMPOUND-RECOGNIZER, the
+:definitions INT-AT-DEFINITION-RULE, JAPANESE-MULT-DEFINITION-RULE
+(forced), MAX, MULTIPLY-DEFINITION-RULE, NATP, REC-MULTIPLY-DEFINITION-RULE
+and SYNP, the :executable-counterparts of BINARY-+, EQUAL, FORCE and
+UNARY--, linear arithmetic, primitive type reasoning, the :rewrite
+rules ACL2::|(* y x)|, ACL2::|(+ (+ x y) z)|, ACL2::|(+ (if a b c) x)|,
+ACL2::|(+ 0 x)|, ACL2::|(+ c (+ d x))|, ACL2::|(+ x (- x))|, 
+ACL2::|(+ x (if a b c))|, ACL2::|(+ y (+ x z))|, ACL2::|(- (+ x y))|,
+ACL2::|(- (if a b c))|, ACL2S-REDUCE-ADDITIVE-CONSTANT-<, 
+ACL2::BUBBLE-DOWN-+-MATCH-1, CONS-TRUE-LISTP-SIG, ACL2::DEFAULT-TIMES-2,
+ACL2::NAT-LISTP-IMPLIES-TLP, ACL2::NORMALIZE-ADDENDS, ACL2::REV-OF-CONS
+and ACL2::REVERSE-REMOVAL and the :type-prescription rules ALLP, 
+INT-TO-LIST-CONTRACT-TP, LEN, MULTIPLY-CONTRACT-TP, NAT-LISTP and 
+REC-MULTIPLY-CONTRACT-TP, to the following six conjectures.
+
 Subgoal 6
-Subgoal 6'
-Subgoal 6''
-^^^ Checkpoint Subgoal 6'' ^^^
+(IMPLIES
+ (AND (INTEGERP X)
+      (<= 0 X)
+      (INTEGERP Y)
+      (<= 0 Y)
+      (< (LEN (INT-TO-LIST Y))
+         (LEN (INT-TO-LIST X)))
+      (NOT (CONSP (INT-TO-LIST Y))))
+ (EQUAL
+   (LIST-TO-INT
+        (PROCESS-CARRY (APP (REV (REC-MULTIPLY (INT-TO-LIST X)
+                                               (INT-TO-LIST Y)
+                                               (LEN (INT-TO-LIST X))))
+                            (LIST (+ (* 0
+                                        (INT-AT (INT-TO-LIST X)
+                                                (+ 1 (LEN (INT-TO-LIST X)))))
+                                     (MULTIPLY (INT-TO-LIST X)
+                                               (INT-TO-LIST Y)
+                                               (+ 1 (LEN (INT-TO-LIST X)))
+                                               (LEN (INT-TO-LIST X))))))
+                       0))
+   (* X Y))).
 
-([ A key checkpoint:
+By the simple :rewrite rule ACL2::|(* 0 x)| we reduce the conjecture
+to
+
+Subgoal 6'
+(IMPLIES
+ (AND (INTEGERP X)
+      (<= 0 X)
+      (INTEGERP Y)
+      (<= 0 Y)
+      (< (LEN (INT-TO-LIST Y))
+         (LEN (INT-TO-LIST X)))
+      (NOT (CONSP (INT-TO-LIST Y))))
+ (EQUAL
+      (LIST-TO-INT
+           (PROCESS-CARRY (APP (REV (REC-MULTIPLY (INT-TO-LIST X)
+                                                  (INT-TO-LIST Y)
+                                                  (LEN (INT-TO-LIST X))))
+                               (LIST (+ 0
+                                        (MULTIPLY (INT-TO-LIST X)
+                                                  (INT-TO-LIST Y)
+                                                  (+ 1 (LEN (INT-TO-LIST X)))
+                                                  (LEN (INT-TO-LIST X))))))
+                          0))
+      (* X Y))).
+
+This simplifies, using the :compound-recognizer rules 
+ACL2::ACL2-NUMBER-LISTP-IMPLIES-TLP, ACL2::ATOM-LISTP-IMPLIES-TLP,
+ACL2::INTEGER-LISTP-IMPLIES-TLP, ACL2::NAT-LISTP-IMPLIES-TLP and 
+ACL2::RATIONAL-LISTP-IMPLIES-TLP, the :executable-counterpart of LEN,
+the :forward-chaining rules ACL2-NUMBER-LIST-IS-SUBTYPE-OF-ATOM-LIST,
+INT-TO-LIST-CONTRACT, INTEGER-LIST-IS-SUBTYPE-OF-RATIONAL-LIST, 
+INTEGER-LISTP-FORWARD-TO-RATIONAL-LISTP, NAT-LIST-IS-SUBTYPE-OF-INTEGER-LIST,
+ACL2::NAT-LISTP-FORWARD-TO-INTEGER-LISTP, 
+DEFDATA::NAT-LISTP-FORWARD-TO-INTEGER-LISTP, 
+RATIONAL-LIST-IS-SUBTYPE-OF-ACL2-NUMBER-LIST, 
+ACL2::RATIONAL-LISTP-FORWARD-TO-ACL2-NUMBER-LISTP and 
+DEFDATA::RATIONAL-LISTP-FORWARD-TO-ACL2-NUMBER-LISTP, the :rewrite
+rules ACL2::|(+ 0 x)|, ACL2::|(< 0 (len x))| and 
+ACL2::CONSP-UNDER-IFF-WHEN-TRUE-LISTP and the :type-prescription rule
+MULTIPLY-CONTRACT-TP, to
 
 Subgoal 6''
 (IMPLIES
@@ -297,18 +385,88 @@ Subgoal 6''
                                               NIL (+ 1 (LEN (INT-TO-LIST X)))
                                               (LEN (INT-TO-LIST X)))))
                          0))
-     (* X Y)))
+     (* X Y))).
+^^^ Checkpoint Subgoal 6'' ^^^
 
-*1 (Subgoal 6'') is pushed for proof by induction.
+Name the formula above *1.
 
-])
 Subgoal 5
-Subgoal 5'
-Subgoal 5''
-Subgoal 5'''
-^^^ Checkpoint Subgoal 5''' ^^^
+(IMPLIES
+ (AND (INTEGERP X)
+      (<= 0 X)
+      (INTEGERP Y)
+      (<= 0 Y)
+      (<= (LEN (INT-TO-LIST X))
+          (LEN (INT-TO-LIST Y)))
+      (NOT (CONSP (INT-TO-LIST Y))))
+ (EQUAL
+   (LIST-TO-INT
+        (PROCESS-CARRY (APP (REV (REC-MULTIPLY (INT-TO-LIST X)
+                                               (INT-TO-LIST Y)
+                                               (LEN (INT-TO-LIST Y))))
+                            (LIST (+ (* 0
+                                        (INT-AT (INT-TO-LIST X)
+                                                (+ 1 (LEN (INT-TO-LIST Y)))))
+                                     (MULTIPLY (INT-TO-LIST X)
+                                               (INT-TO-LIST Y)
+                                               (+ 1 (LEN (INT-TO-LIST Y)))
+                                               (LEN (INT-TO-LIST Y))))))
+                       0))
+   (* X Y))).
 
-([ A key checkpoint:
+By the simple :rewrite rule ACL2::|(* 0 x)| we reduce the conjecture
+to
+
+Subgoal 5'
+(IMPLIES
+ (AND (INTEGERP X)
+      (<= 0 X)
+      (INTEGERP Y)
+      (<= 0 Y)
+      (<= (LEN (INT-TO-LIST X))
+          (LEN (INT-TO-LIST Y)))
+      (NOT (CONSP (INT-TO-LIST Y))))
+ (EQUAL
+      (LIST-TO-INT
+           (PROCESS-CARRY (APP (REV (REC-MULTIPLY (INT-TO-LIST X)
+                                                  (INT-TO-LIST Y)
+                                                  (LEN (INT-TO-LIST Y))))
+                               (LIST (+ 0
+                                        (MULTIPLY (INT-TO-LIST X)
+                                                  (INT-TO-LIST Y)
+                                                  (+ 1 (LEN (INT-TO-LIST Y)))
+                                                  (LEN (INT-TO-LIST Y))))))
+                          0))
+      (* X Y))).
+
+This simplifies, using the :compound-recognizer rules 
+ACL2::ACL2-NUMBER-LISTP-IMPLIES-TLP, ACL2::ATOM-LISTP-IMPLIES-TLP,
+ACL2::INTEGER-LISTP-IMPLIES-TLP, ACL2::NAT-LISTP-IMPLIES-TLP and 
+ACL2::RATIONAL-LISTP-IMPLIES-TLP, the :executable-counterparts of BINARY-+,
+BINARY-APPEND, CONS, LEN, LIST-TO-INT, MULTIPLY, PROCESS-CARRY, REC-MULTIPLY
+and REV, the :forward-chaining rules 
+ACL2-NUMBER-LIST-IS-SUBTYPE-OF-ATOM-LIST, INT-TO-LIST-CONTRACT, 
+INTEGER-LIST-IS-SUBTYPE-OF-RATIONAL-LIST, 
+INTEGER-LISTP-FORWARD-TO-RATIONAL-LISTP, NAT-LIST-IS-SUBTYPE-OF-INTEGER-LIST,
+ACL2::NAT-LISTP-FORWARD-TO-INTEGER-LISTP, 
+DEFDATA::NAT-LISTP-FORWARD-TO-INTEGER-LISTP, 
+RATIONAL-LIST-IS-SUBTYPE-OF-ACL2-NUMBER-LIST, 
+ACL2::RATIONAL-LISTP-FORWARD-TO-ACL2-NUMBER-LISTP and 
+DEFDATA::RATIONAL-LISTP-FORWARD-TO-ACL2-NUMBER-LISTP and the :rewrite
+rules ACL2::|(< 0 (len x))| and ACL2::CONSP-UNDER-IFF-WHEN-TRUE-LISTP,
+to
+
+Subgoal 5''
+(IMPLIES (AND (INTEGERP X)
+              (<= 0 X)
+              (INTEGERP Y)
+              (<= 0 Y)
+              (NOT (INT-TO-LIST X))
+              (NOT (INT-TO-LIST Y)))
+         (EQUAL 0 (* X Y))).
+
+This simplifies, using the :definition SYNP and the :rewrite rule 
+ACL2::|(equal (* x y) 0)|, to
 
 Subgoal 5'''
 (IMPLIES (AND (INTEGERP X)
@@ -318,15 +476,14 @@ Subgoal 5'''
               (NOT (INT-TO-LIST X))
               (NOT (INT-TO-LIST Y))
               (NOT (EQUAL X 0)))
-         (EQUAL Y 0))
+         (EQUAL Y 0)).
+^^^ Checkpoint Subgoal 5''' ^^^
 
 Normally we would attempt to prove Subgoal 5''' by induction.  However,
 we prefer in this instance to focus on the original input conjecture
 rather than this simplified special case.  We therefore abandon our
 previous work on this conjecture and reassign the name *1 to the original
-conjecture.  (See :DOC otf-flg.)
-
-])
+conjecture.  (See :DOC otf-flg.)  [Note:  Thanks again for the hint.]
 
 No induction schemes are suggested by *1.  Consequently, the proof
 attempt has failed.
@@ -401,7 +558,7 @@ Rules: ((:COMPOUND-RECOGNIZER ACL2::ACL2-NUMBER-LISTP-IMPLIES-TLP)
         (:TYPE-PRESCRIPTION NAT-LISTP)
         (:TYPE-PRESCRIPTION REC-MULTIPLY-CONTRACT-TP))
 Warnings:  Non-rec
-Time:  3.83 seconds (prove: 3.24, print: 0.00, proof tree: 0.00, other: 0.58)
+Time:  3.88 seconds (prove: 3.28, print: 0.01, proof tree: 0.00, other: 0.59)
 Prover steps counted:  55461
 
 ---
