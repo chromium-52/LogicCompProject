@@ -145,16 +145,16 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (int-to-list 15468) (list 8 6 4 5 1))
 
 ;; convert the given lon to a natural
-(definec list-to-int (l :lon) :nat
+(definec list-to-nat (l :lon) :nat
   (cond
    ((endp l) 0)
-   (t (+ (car l) (* 10 (list-to-int (cdr l)))))))
+   (t (+ (car l) (* 10 (list-to-nat (cdr l)))))))
 
-(check= (list-to-int '()) 0)
-(check= (list-to-int '(0)) 0)
-(check= (list-to-int '(3)) 3)
-(check= (list-to-int '(1 5 6)) 651)
-(check= (list-to-int '(8 2 1 4 4)) 44128)
+(check= (list-to-nat '()) 0)
+(check= (list-to-nat '(0)) 0)
+(check= (list-to-nat '(3)) 3)
+(check= (list-to-nat '(1 5 6)) 651)
+(check= (list-to-nat '(8 2 1 4 4)) 44128)
 
 ;; zero-based indexOf
 (definec index-of (l :lon n :nat) :nat
@@ -171,25 +171,25 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (index-of '(1 2 3 4 5 6) 7) 10006)
 
 ;; get the element at the given index (similar to charAt for strings in Java)
-(definec int-at (l :lon index :nat) :nat
+(definec nat-at (l :lon index :nat) :nat
   (cond
    ((endp l) 0) ; return a "sentinel" value if index out of bounds
    ((zerop index) (car l))
-   (t (int-at (cdr l) (1- index)))))
+   (t (nat-at (cdr l) (1- index)))))
 
-(check= (int-at '() 1) 0)
-(check= (int-at '(1 2 3 4 5) 0) 1)
-(check= (int-at '(1 2 3 4 5) 1) 2)
-(check= (int-at '(1 2 3 4 5) 4) 5)
-(check= (int-at '(1 2 3 4 5) 6) 0)
+(check= (nat-at '() 1) 0)
+(check= (nat-at '(1 2 3 4 5) 0) 1)
+(check= (nat-at '(1 2 3 4 5) 1) 2)
+(check= (nat-at '(1 2 3 4 5) 4) 5)
+(check= (nat-at '(1 2 3 4 5) 6) 0)
 
 ;; multiply elements whose indicies that add up to the magnitude equal to that of 10 raised
 ;; to a power of the given index
 (definec multiply (l1 :lon l2 :lon index :nat acc :nat) :nat
   :ic (>= index acc)
   (cond
-   ((zerop acc) (* (int-at l1 acc) (int-at l2 (- index acc))))
-   (t (+ (* (int-at l1 acc) (int-at l2 (- index acc))) (multiply l1 l2 index (1- acc))))))
+   ((zerop acc) (* (nat-at l1 acc) (nat-at l2 (- index acc))))
+   (t (+ (* (nat-at l1 acc) (nat-at l2 (- index acc))) (multiply l1 l2 index (1- acc))))))
 
 (check= (multiply (list 7 8) (list 4 3) 0 0) 28) ;; (7 * 4)           ;; (0 * 0)           ;; 2 - 2 = 0
 (check= (multiply (list 7 8) (list 4 3) 1 1) 53) ;; (8 * 4) + (7 * 3) ;; (1 * 0) + (0 * 1) ;; 2 - 1 = 1
@@ -205,11 +205,11 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (multiply (list 4 0 0 1) (list 7 0 1) 5 5) 1)
 
 ;; run multiply recursively and add the results of multiplying to their correct places
-(definec rec-multiply (l1 :lon l2 :lon l1-length :nat) :lon
+(definec rec-multiply (l1 :lon l2 :lon length :nat) :lon
   (cond
-   ((zerop l1-length) (list (multiply l1 l2 l1-length l1-length)))
-   (t (cons (multiply l1 l2 l1-length l1-length)
-            (rec-multiply l1 l2 (1- l1-length))))))
+   ((zerop length) (list (multiply l1 l2 length length)))
+   (t (cons (multiply l1 l2 length length)
+            (rec-multiply l1 l2 (1- length))))))
 
 (check= (rec-multiply (list 7 8) (list 4 3) 2) (list 24 53 28))
 (check= (rec-multiply (list 2 5 4) (list 3 2) 3) (list 8 22 19 6))
@@ -236,10 +236,10 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (process-carry '(14 34 61 21) 0) '(4 5 4 7 2))
 
 ;; main function
-(definec japanese-mult (i1 :nat i2 :nat) :nat
-  (list-to-int (process-carry (reverse (rec-multiply (int-to-list i1)
-                                                     (int-to-list i2)
-                                                     (1+ (max (len (int-to-list i1)) (len (int-to-list i2))))))
+(definec japanese-mult (i1 :lon i2 :lon) :nat
+  (list-to-int (process-carry (reverse (rec-multiply (nat-to-list i1)
+                                                     (nat-to-list i2)
+                                                     (1+ (max (len (nat-to-list i1)) (len (nat-to-list i2))))))
                               0)))
 
 (check= (japanese-mult 87 34) 2958)
@@ -261,6 +261,6 @@ l2 = (int-to-list 34) = (list 4 3)
 
 
 (defthm japanese-multiplication
-  (implies (and (natp x) (natp y))
-           (equal (japanese-mult x y) (* x y))))
+  (implies (and (lonp x) (lonp y))
+           (equal (japanese-mult x y) (* (list-to-nat x) (list-to-nat y)))))
 
