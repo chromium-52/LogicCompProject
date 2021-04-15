@@ -63,11 +63,48 @@
 
 ; ******************* END INITIALIZATION FOR ACL2s MODE ******************* ;
 ;$ACL2s-SMode$;ACL2s
-(1, 2, 3) (4, 5, 6)
-((1, 4), (2, 5), (3, 6))...a
+;(1, 2, 3) (4, 5, 6)
+;((1, 4), (2, 5), (3, 6))...a
 
-(3, 2, 1) (6, 5, 4)
-((3, 6), (2, 5), (1, 4))...b
+;(3, 2, 1) (6, 5, 4)
+;((3, 6), (2, 5), (1, 4))...b
 
-(equal (reverse (zip tl1 tl2))
-       (zip (reverse tl1) (reverse tl2)))
+(defdata lon (listof nat))
+
+(defdata pair (cons nat nat))
+(defdata lop (listof pair))
+
+(definec app2 (x :tl y :tl) :tl
+  (if (endp x)
+      y
+    (cons (first x) (app2 (rest x) y))))
+
+(definec rev2 (x :tl) :tl
+   (if (endp x)
+       x
+     (app2 (rev2 (cdr x)) (list (car x)))))
+
+(definec zip2 (l1 :lon l2 :lon) :lop
+  :ic (equal (len l1) (len l2))
+  (cond
+   ((endp l1) nil)
+   (t (cons (cons (car l1) (car l2)) (zip2 (cdr l1) (cdr l2))))))#|ACL2s-ToDo-Line|#
+
+
+;(definec zip3 (l1 :lon l2 :lon) :tl
+;  :ic (equal (len l1) (len l2))
+;  (cond
+;   ((endp l1) nil)
+;   (t (app2 (cons (car l1) (car l2)) (zip3 (cdr l1) (cdr l2))))))
+
+(set-gag-mode nil)
+
+(defthm zip2-rev2
+  (implies (and (lonp tl1) (lonp tl2) (equal (len tl1) (len tl2)) (consp tl1))
+           (equal (rev2 (zip2 tl1 tl2))
+                  (zip2 (rev2 tl1) (rev2 tl2)))))
+
+(defthm zip2-rev2
+  (implies (and (lonp tl1) (lonp tl2) (equal (len tl1) (len tl2)))
+           (equal (rev2 (zip2 tl1 tl2))
+                  (zip2 (rev2 tl1) (rev2 tl2)))))
