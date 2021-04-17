@@ -129,26 +129,22 @@ l2 = (int-to-list 34) = (list 4 3)
 (list-to-int (list 8 5 9 2) = 2958
 |#
 
-(defdata lessthanten (oneof 0 1 2 3 4 5 6 7 8 9))
-
+;; one-digit natural number
+(defdata less-than-ten (oneof 0 1 2 3 4 5 6 7 8 9))
 ;; list of naturals
-(defdata lon (listof lessthanten))
+(defdata lon (listof less-than-ten))
 
-;; previously used functions
+;; append two lists
 (definec app2 (x :lon y :lon) :lon
   (if (endp x)
       y
     (cons (first x) (app2 (rest x) y))))
 
+;; reverse the given list
 (definec rev2 (x :lon) :lon
    (if (endp x)
        x
      (app2 (rev2 (cdr x)) (list (car x)))))
-
-(definec in2 (n :nat l :lon) :bool
-  (and (consp l)
-       (or (== n (first l))
-           (in2 n (rest l)))))
 
 ;; convert the given lon to a natural
 (definec list-to-nat (l :lon) :nat
@@ -156,12 +152,19 @@ l2 = (int-to-list 34) = (list 4 3)
    ((endp l) 0)
    (t (+ (* (expt 10 (1- (len l))) (car l)) (list-to-nat (cdr l))))))
 
+;(definec list-to-nat (l :lon) :nat
+;  (cond
+;   ((endp l) 0)
+;   (t (+ (car l) (* 10 (list-to-nat (cdr l)))))))
+
 (check= (list-to-nat '()) 0)
 (check= (list-to-nat '(0)) 0)
 (check= (list-to-nat '(3)) 3)
 (check= (list-to-nat '(6 5 1)) 651)
 (check= (list-to-nat '(4 4 1 2 8)) 44128)
 
+;; add the products of the corresponding digits along a single diagonal
+;; (refer to a diagram of Japanese multiplication for additional information)
 (definec multiply2-helper (val :nat l2 :lon length :nat) :nat
   (cond
    ((endp l2) 0)
@@ -172,7 +175,7 @@ l2 = (int-to-list 34) = (list 4 3)
 (check= (multiply2-helper 2 (list 2 1 1) 1) 4220)
 (check= (multiply2-helper 3 (list 2 1 1) 0) 633)
 
-;(multiply2 '(1 2 3) '(2 1 1))
+;; add the values of all individual diagonals
 (definec multiply2 (l1 :lon l2 :lon) :nat
   (cond
    ((endp l1) 0)
@@ -184,20 +187,46 @@ l2 = (int-to-list 34) = (list 4 3)
 
 (set-gag-mode nil)
 
-(defthm multby0l1
-  (implies (and (equal (list 0) l1) (lonp l2))
-           (equal (multiply2 l1 l2) 0)))
+;(defthm l1-is-zero
+;  (implies (and (equal (list 0) l1) (lonp l2))
+;           (equal (multiply2 l1 l2) 0)))
 
-(defthm multby0l2
-  (implies (and (equal (list 0) l2) (lonp l1))
-           (equal (multiply2 l1 l2) 0)))
+;(defthm l2-is-zero
+;  (implies (and (equal (list 0) l2) (lonp l1))
+;           (equal (multiply2 l1 l2) 0)))
 
-(defthm cdr-empty
-  (implies (endp l)
-           (equal (len (cdr l)) 0)))#|ACL2s-ToDo-Line|#
+(skip-proofs
+ (defthm test
+   (IMPLIES (AND (EQUAL (CAR L1) 0)
+              (LONP (CDR L1))
+              (CONSP L1)
+              (EQUAL (MULTIPLY2 (CDR L1) L2)
+                     (* (LIST-TO-NAT L2)
+                        (LIST-TO-NAT (CDR L1))))
+              (LONP L2))
+         (EQUAL (MULTIPLY2-HELPER 0 L2 (LEN (CDR L1)))
+                0))))#|ACL2s-ToDo-Line|#
 
+
+(defthm placeholder
+  (implies (and (less-than-tenp n)
+                (equal (car l1) n)
+                (lonp (cdr l1))
+                (consp l1)
+                (equal (multiply2 (cdr l1) l2)
+                       (* (list-to-nat l2)
+                          (list-to-nat (cdr l1))))
+                (lonp l2))
+           (equal (multiply2-helper n l2 (len (cdr l1)))
+                  (* n (list-to-nat l2)
+                     (expt 10 (len (cdr l1)))))))
 
 (defthm multiply2-defthm
   (implies (and (lonp l1) (lonp l2))
            (equal (multiply2 l1 l2) (* (list-to-nat l1) 
                                        (list-to-nat l2)))))
+
+;(defthm multiply2-defthm
+;  (implies (and (lonp l1) (lonp l2))
+;           (equal (multiply2 l1 l2) (* (list-to-nat (rev2 l1))
+;                                       (list-to-nat (rev2 l2))))))
