@@ -150,7 +150,8 @@ l2 = (int-to-list 34) = (list 4 3)
 (definec list-to-nat (l :lon) :nat
   (cond
    ((endp l) 0)
-   (t (+ (* (expt 10 (1- (len l))) (car l)) (list-to-nat (cdr l))))))
+   (t (+ (* (car l) (expt 10 (1- (len l))))
+         (list-to-nat (cdr l))))))
 
 ;(definec list-to-nat (l :lon) :nat
 ;  (cond
@@ -165,68 +166,108 @@ l2 = (int-to-list 34) = (list 4 3)
 
 ;; add the products of the corresponding digits along a single diagonal
 ;; (refer to a diagram of Japanese multiplication for additional information)
-(definec multiply2-helper (val :nat l2 :lon length :nat) :nat
+(definec mult-helper (val :nat l2 :lon length :nat) :nat
   (cond
    ((endp l2) 0)
    (t (+ (* val (car l2) (expt 10 (+ length (1- (len l2)))))
-         (multiply2-helper val (cdr l2) length)))))
+         (mult-helper val (cdr l2) length)))))
 
-(check= (multiply2-helper 1 (list 2 1 1) 2) 21100)
-(check= (multiply2-helper 2 (list 2 1 1) 1) 4220)
-(check= (multiply2-helper 3 (list 2 1 1) 0) 633)
+(check= (mult-helper 1 (list 2 1 1) 2) 21100)
+(check= (mult-helper 2 (list 2 1 1) 1) 4220)
+(check= (mult-helper 3 (list 2 1 1) 0) 633)
 
 ;; add the values of all individual diagonals
-(definec multiply2 (l1 :lon l2 :lon) :nat
+(definec japanese-mult (l1 :lon l2 :lon) :nat
   (cond
    ((endp l1) 0)
-   (t (+ (multiply2-helper (car l1) l2 (1- (len l1)))
-         (multiply2 (cdr l1) l2)))))
+   (t (+ (mult-helper (car l1) l2 (1- (len l1)))
+         (japanese-mult (cdr l1) l2)))))
 
-(check= (multiply2 (list 1 2 3) (list 2 1 1)) 25953)
-(check= (multiply2 (list 1 2) (list 2 1 1)) 2532)
+(check= (japanese-mult (list 1 2 3) (list 2 1 1)) 25953)
+(check= (japanese-mult (list 1 2) (list 2 1 1)) 2532)
+(check= (japanese-mult (list 0) (list 1 2 3)) 0)
+(check= (japanese-mult (list 7 2 4) (list 6 5 2 1)) 4721204)
+
+(test? (implies (and (lonp l1) (lonp l2))
+                (equal (japanese-mult l1 l2) (* (list-to-nat l1) 
+                                                (list-to-nat l2)))))
 
 (set-gag-mode nil)
 
 ;(defthm l1-is-zero
 ;  (implies (and (equal (list 0) l1) (lonp l2))
-;           (equal (multiply2 l1 l2) 0)))
+;           (equal (japanese-mult l1 l2) 0)))
 
 ;(defthm l2-is-zero
 ;  (implies (and (equal (list 0) l2) (lonp l1))
-;           (equal (multiply2 l1 l2) 0)))
+;           (equal (japanese-mult l1 l2) 0)))
+
+(definec list-to-nat-rev (l :lon) :nat
+  (cond
+   ((endp l) 0)
+   (t (+ (car l) (* 10 (list-to-nat-rev (cdr l)))))))
+
+(defthm list-to-nat-defthm
+  (implies (and (lonp l1) (lonp l2) (natp x) (natp y)
+                (equal (list-to-nat l1) x)
+                (equal (list-to-nat l2) y))
+           (equal (* (list-to-nat l1) (list-to-nat l2))
+                  (* x y))))#|ACL2s-ToDo-Line|#
+
+
+(defthm expand-japanese-mult
+  (implies (and (lonp l1) (lonp l2))
+           (equal (japanese-mult l1 l2)
+                  (* (mult-helper 1 l1 0) (mult-helper 1 l2 0)))))
 
 (skip-proofs
  (defthm test
    (IMPLIES (AND (EQUAL (CAR L1) 0)
               (LONP (CDR L1))
               (CONSP L1)
-              (EQUAL (MULTIPLY2 (CDR L1) L2)
+              (EQUAL (japanese-mult (CDR L1) L2)
                      (* (LIST-TO-NAT L2)
                         (LIST-TO-NAT (CDR L1))))
               (LONP L2))
-         (EQUAL (MULTIPLY2-HELPER 0 L2 (LEN (CDR L1)))
-                0))))#|ACL2s-ToDo-Line|#
+         (EQUAL (mult-helper 0 L2 (LEN (CDR L1)))
+                0))))
 
+(test? (implies (and (lonp l1) (lonp l2))
+                (equal (japanese-mult l1 l2) (* (list-to-nat l1) 
+                                                (list-to-nat l2)))))
+
+(defthm groupme
+  (IMPLIES (AND (NOT (ENDP L1))
+                (EQUAL (japanese-mult (CDR L1) L2)
+                       (* (LIST-TO-NAT (CDR L1))
+                          (LIST-TO-NAT L2)))
+                (LONP L1)
+                (LONP L2))
+           (EQUAL (japanese-mult L1 L2)
+                  (* (LIST-TO-NAT L1) (LIST-TO-NAT L2))))
+  :hints (("Goal" :hands-off list-to-nat)))
 
 (defthm placeholder
   (implies (and (less-than-tenp n)
                 (equal (car l1) n)
                 (lonp (cdr l1))
                 (consp l1)
-                (equal (multiply2 (cdr l1) l2)
+                (equal (japanese-mult (cdr l1) l2)
                        (* (list-to-nat l2)
                           (list-to-nat (cdr l1))))
                 (lonp l2))
-           (equal (multiply2-helper n l2 (len (cdr l1)))
+           (equal (mult-helper n l2 (len (cdr l1)))
                   (* n (list-to-nat l2)
-                     (expt 10 (len (cdr l1)))))))
+                     (expt 10 (len (cdr l1))))))
+  :hints (("Subgoal *1/" :hands-off (list-to-nat l1))))
 
-(defthm multiply2-defthm
+(defthm japanese-multiplication
   (implies (and (lonp l1) (lonp l2))
-           (equal (multiply2 l1 l2) (* (list-to-nat l1) 
-                                       (list-to-nat l2)))))
+           (equal (japanese-mult l1 l2)
+                  (* (list-to-nat l1) 
+                     (list-to-nat l2)))))
 
-;(defthm multiply2-defthm
+;(defthm japanese-multiplication-rev2
 ;  (implies (and (lonp l1) (lonp l2))
-;           (equal (multiply2 l1 l2) (* (list-to-nat (rev2 l1))
-;                                       (list-to-nat (rev2 l2))))))
+;           (equal (japanese-mult l1 l2) (* (list-to-nat (rev2 l1))
+;                                        (list-to-nat (rev2 l2))))))
