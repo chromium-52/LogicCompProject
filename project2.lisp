@@ -202,11 +202,14 @@ l2 = (int-to-list 34) = (list 4 3)
 ;  (implies (and (equal (list 0) l2) (lonp l1))
 ;           (equal (japanese-mult l1 l2) 0)))
 
+
+;;previous implementation of list-to-nat
 (definec list-to-nat-rev (l :lon) :nat
   (cond
    ((endp l) 0)
    (t (+ (car l) (* 10 (list-to-nat-rev (cdr l)))))))
 
+;;tried to prove list-to-nat so that ACL2s would see that it is true, leave it alone and only focus on japanese mult
 (defthm list-to-nat-defthm
   (implies (and (lonp l1) (lonp l2) (natp x) (natp y)
                 (equal (list-to-nat l1) x)
@@ -214,12 +217,13 @@ l2 = (int-to-list 34) = (list 4 3)
            (equal (* (list-to-nat l1) (list-to-nat l2))
                   (* x y))))#|ACL2s-ToDo-Line|#
 
-
+;;tried to get rid of list-to-nat
 (defthm expand-japanese-mult
   (implies (and (lonp l1) (lonp l2))
            (equal (japanese-mult l1 l2)
                   (* (mult-helper 1 l1 0) (mult-helper 1 l2 0)))))
 
+;;one of the subgoals that ACL2 failed at
 (skip-proofs
  (defthm test
    (IMPLIES (AND (EQUAL (CAR L1) 0)
@@ -235,7 +239,7 @@ l2 = (int-to-list 34) = (list 4 3)
 (test? (implies (and (lonp l1) (lonp l2))
                 (equal (japanese-mult l1 l2) (* (list-to-nat l1) 
                                                 (list-to-nat l2)))))
-
+;;same thing as above, just a different one
 (defthm groupme
   (IMPLIES (AND (NOT (ENDP L1))
                 (EQUAL (japanese-mult (CDR L1) L2)
@@ -247,6 +251,8 @@ l2 = (int-to-list 34) = (list 4 3)
                   (* (LIST-TO-NAT L1) (LIST-TO-NAT L2))))
   :hints (("Goal" :hands-off list-to-nat)))
 
+;;same as above, expands list-to-nat which we want to avoid because we don't think proving list-to-nat is
+;;useful when trying to prove japanese-mult, i.e., list-to-nat has nothing to do with the main proof.
 (defthm placeholder
   (implies (and (less-than-tenp n)
                 (equal (car l1) n)
@@ -261,6 +267,7 @@ l2 = (int-to-list 34) = (list 4 3)
                      (expt 10 (len (cdr l1))))))
   :hints (("Subgoal *1/" :hands-off (list-to-nat l1))))
 
+;;main theorem of japanese-mult
 (defthm japanese-multiplication
   (implies (and (lonp l1) (lonp l2))
            (equal (japanese-mult l1 l2)
