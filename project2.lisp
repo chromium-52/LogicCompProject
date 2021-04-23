@@ -134,6 +134,8 @@ l2 = (int-to-list 34) = (list 4 3)
 ;; list of naturals
 (defdata lon (listof less-than-ten))
 
+#| 
+unused functions:
 ;; append two lists
 (definec app2 (x :lon y :lon) :lon
   (if (endp x)
@@ -145,6 +147,7 @@ l2 = (int-to-list 34) = (list 4 3)
    (if (endp x)
        x
      (app2 (rev2 (cdr x)) (list (car x)))))
+|#
 
 ;; convert the given lon to a natural
 (definec list-to-nat (l :lon) :nat
@@ -204,19 +207,73 @@ l2 = (int-to-list 34) = (list 4 3)
 
 
 ;;previous implementation of list-to-nat
+;;not used
 (definec list-to-nat-rev (l :lon) :nat
   (cond
    ((endp l) 0)
    (t (+ (car l) (* 10 (list-to-nat-rev (cdr l)))))))
 
-;;tried to prove list-to-nat so that ACL2s would see that it is true, leave it alone and only focus on japanese mult
+;;tried to prove list-to-nat so that ACL2s would see that it is true, leave it alone 
+;;and only focus on japanese mult
 (defthm list-to-nat-defthm
   (implies (and (lonp l1) (lonp l2) (natp x) (natp y)
                 (equal (list-to-nat l1) x)
                 (equal (list-to-nat l2) y))
            (equal (* (list-to-nat l1) (list-to-nat l2))
-                  (* x y))))#|ACL2s-ToDo-Line|#
+                  (* x y))))
 
+(defthm endp-l2
+  (implies (and (lonp l1) (lonp l2) (endp l2))
+           (equal (japanese-mult l1 l2)
+                  0)))
+
+(defthm mult-help-0
+  (implies (AND (LONP L2) (natp x))
+         (EQUAL (MULT-HELPER 0 L2 x)
+                0)))
+
+(defthm mult-help-to-list-to-nat
+  (implies (and (natp x) (lonp l2) (natp y))
+           (equal (mult-helper x l2 y)
+                  (* x (list-to-nat l2) (expt 10 y)))))
+
+(defthm testing
+  (IMPLIES (AND (lonp l1)
+                (CONSP L1)
+                (LONP L2)
+                L2)
+           (EQUAL (MULT-HELPER (car l1) L2 (LEN (CDR L1)))
+                  (* (car l1) (expt 10 (1- (len l1)))
+                     (LIST-TO-NAT L2)))))
+#|
+(defthm testing2
+  (IMPLIES (AND (lonp l1)
+                (CONSP L1)
+                (EQUAL (JAPANESE-MULT (CDR L1) L2)
+                       (* (LIST-TO-NAT L2)
+                          (LIST-TO-NAT (CDR L1))))
+                (LONP L2)
+                L2)
+           (EQUAL (+ (JAPANESE-MULT (CDR L1) L2)
+                     (MULT-HELPER (car l1) L2 (LEN (CDR L1))))
+                  (+ (* (* (car l1) (expt 10 (1- (len l1))))
+                        (LIST-TO-NAT L2))
+                     (* (LIST-TO-NAT (cdr L1)) 
+                        (LIST-TO-NAT L2))))))
+
+(defthm consp-l2
+  (implies (and (lonp l1) (lonp l2) (consp l2))
+           (equal (japanese-mult l1 l2)
+                  (* (list-to-nat l1) 
+                     (list-to-nat l2)))))
+|#
+
+(defthm japanese-multiplication
+  (implies (and (lonp l1) (lonp l2))
+           (equal (japanese-mult l1 l2)
+                  (* (list-to-nat l1) 
+                     (list-to-nat l2)))))
+#|
 ;;tried to get rid of list-to-nat
 (defthm expand-japanese-mult
   (implies (and (lonp l1) (lonp l2))
@@ -251,8 +308,9 @@ l2 = (int-to-list 34) = (list 4 3)
                   (* (LIST-TO-NAT L1) (LIST-TO-NAT L2))))
   :hints (("Goal" :hands-off list-to-nat)))
 
-;;same as above, expands list-to-nat which we want to avoid because we don't think proving list-to-nat is
-;;useful when trying to prove japanese-mult, i.e., list-to-nat has nothing to do with the main proof.
+;;same as above, expands list-to-nat which we want to avoid because 
+;;we don't think proving list-to-nat is useful when trying to prove japanese-mult
+;;i.e., list-to-nat has nothing to do with the main proof.
 (defthm placeholder
   (implies (and (less-than-tenp n)
                 (equal (car l1) n)
@@ -278,3 +336,4 @@ l2 = (int-to-list 34) = (list 4 3)
 ;  (implies (and (lonp l1) (lonp l2))
 ;           (equal (japanese-mult l1 l2) (* (list-to-nat (rev2 l1))
 ;                                        (list-to-nat (rev2 l2))))))
+|#
