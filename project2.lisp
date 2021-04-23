@@ -222,6 +222,7 @@ unused functions:
            (equal (* (list-to-nat l1) (list-to-nat l2))
                   (* x y))))
 
+#|
 (defthm endp-l2
   (implies (and (lonp l1) (lonp l2) (endp l2))
            (equal (japanese-mult l1 l2)
@@ -231,20 +232,23 @@ unused functions:
   (implies (AND (LONP L2) (natp x))
          (EQUAL (MULT-HELPER 0 L2 x)
                 0)))
+|#
 
+;;relates mult-helper to list-to-nat with arbitrary natural numbers
 (defthm mult-help-to-list-to-nat
   (implies (and (natp x) (lonp l2) (natp y))
            (equal (mult-helper x l2 y)
                   (* x (list-to-nat l2) (expt 10 y)))))
 
-(defthm testing
-  (IMPLIES (AND (lonp l1)
-                (CONSP L1)
-                (LONP L2)
-                L2)
-           (EQUAL (MULT-HELPER (car l1) L2 (LEN (CDR L1)))
+;;relates mult-helper to list-to-nat with two lists of natural numbers
+(defthm mult-help-to-list-to-nat2
+  (implies (and (lonp l1)
+                (consp l1)
+                (lonp l2)
+                l2)
+           (equal (mult-helper (car l1) l2 (len (cdr l1)))
                   (* (car l1) (expt 10 (1- (len l1)))
-                     (LIST-TO-NAT L2)))))
+                     (list-to-nat l2)))))
 #|
 (defthm testing2
   (IMPLIES (AND (lonp l1)
@@ -268,6 +272,9 @@ unused functions:
                      (list-to-nat l2)))))
 |#
 
+;;overall defthm
+;;proves that our japanese-mult function is equivalent to multiplying
+;;two lists of natural numbers 
 (defthm japanese-multiplication
   (implies (and (lonp l1) (lonp l2))
            (equal (japanese-mult l1 l2)
