@@ -65,89 +65,66 @@
 ;$ACL2s-SMode$;ACL2s
 ;; Proving Japanese multiplication using ACL2s theorem prover
 
-; Encode the two integers into a format that ACL2s can understand
-;; using decimal expansion to output a pair of lists (each element in the list represents a particular digit)
-; Multiply each digit by each digit in the other list
-;; the number of multiplications is equal to (number of digits of first integer) * (number of digits of second integer)
-;; if the sum of the products of any digit is greater than or equal to 10, carry its tens digit
-; Put all the digits together
-
-; 42 * 21
-; l1...(4, 2)
-; l2...(2, 1)
-; 
-; 2 * 1 = 2 => 2
-;
-; 4 * 1 = 4
-; 2 * 2 = 4 => 4 + 4 = 8
-;
-; 4 * 2 = 8 => 8
-;
-; => 882
-
-; 14 * 23
-; l1...(1, 4)
-; l2...(2, 3)
-;
-; 4 * 3 = 12 => 2 (with carry of 1)
-;
-; 1 * 3 = 3
-; 4 * 2 = 8 => 1 + 3 + 8 = 2 (with carry of 1)
-;
-; 1 * 2 = 2 => 1 + 2 = 3
-;
-; => 322
-
-; 321 * 13
-; l1...(3, 2, 1)
-; l2......(1, 3)
-;
-; 1 * 3 = 3
-;
-; 2 * 3 = 6
-; 1 * 1 = 1 => 6 + 1 = 7
-;
-; 3 * 3 = 9
-; 2 * 1 = 2 => 9 + 2 = 1 (with carry of 1)
-;
-; 3 * 1 = 3 => 1 + 3 = 4
-;
-; => 4173
-
 #|
-87 * 34 = 2958
-i1 = 87
-i2 = 34
-l1 = (int-to-list 87) = (list 7 8)
-l2 = (int-to-list 34) = (list 4 3)
-(rec-multiply l1 l2) = calls multiply recursively 
-         (multiply l1 l2 0) = 28 (0,0)
-         (multiply l1 l2 1) = 32 + 21 = 53 1 (1,0) + (0,1)
-         (multiply l1 l2 2) = 24 (1,1) bc no index equalling to 2
-         = (list 28 53 24)
-(process-carry (list 28 53 24)) = (list 8 5 9 2)
-(list-to-int (list 8 5 9 2) = 2958
+Examples:
+
+Ex 1) 42 * 21
+l1...(4, 2)
+l2...(2, 1)
+
+2 * 1 = 2 => 2
+
+4 * 1 = 4
+2 * 2 = 4 => 4 + 4 = 8
+
+4 * 2 = 8 => 8
+
+=> 882
+
+Ex 2) 14 * 23
+l1...(1, 4)
+l2...(2, 3)
+
+4 * 3 = 12 => 2 (with carry of 1)
+
+1 * 3 = 3
+4 * 2 = 8 => 1 + 3 + 8 = 2 (with carry of 1)
+
+1 * 2 = 2 => 1 + 2 = 3
+
+=> 322
+
+Ex 3) 321 * 13
+l1...(3, 2, 1)
+l2......(1, 3)
+
+1 * 3 = 3
+
+2 * 3 = 6
+1 * 1 = 1 => 6 + 1 = 7
+
+3 * 3 = 9
+2 * 1 = 2 => 9 + 2 = 1 (with carry of 1)
+
+3 * 1 = 3 => 1 + 3 = 4
+
+=> 4173
+
+Overall program flow:
+
+Ex) 87 * 34 = 2958
+l1 = (list 8 7)
+l2 = (list 3 4)
+(japanese-mult l1 l2) = calls mult-helper recursively
+           (mult-helper 8 (list 3 4) 1) = 2720 (8 * 3 * 10^2 + 8 * 4 * 10^1)
+         + (mult-helper 7 (list 3 4) 0) = 238 (7 * 3 * 10^1 + 7 * 4 * 10^0)
+         = 2958
 |#
 
 ;; one-digit natural number
 (defdata less-than-ten (oneof 0 1 2 3 4 5 6 7 8 9))
 ;; list of naturals
 (defdata lon (listof less-than-ten))
-
-#| 
-unused functions:
-;; append two lists
-(definec app2 (x :lon y :lon) :lon
-  (if (endp x)
-      y
-    (cons (first x) (app2 (rest x) y))))
-
-;; reverse the given list
-(definec rev2 (x :lon) :lon
-   (if (endp x)
-       x
-     (app2 (rev2 (cdr x)) (list (car x)))))
-|#
 
 ;; convert the given lon to a natural
 (definec list-to-nat (l :lon) :nat
@@ -156,11 +133,6 @@ unused functions:
    (t (+ (* (car l) (expt 10 (1- (len l))))
          (list-to-nat (cdr l))))))
 
-;(definec list-to-nat (l :lon) :nat
-;  (cond
-;   ((endp l) 0)
-;   (t (+ (car l) (* 10 (list-to-nat (cdr l)))))))
-
 (check= (list-to-nat '()) 0)
 (check= (list-to-nat '(0)) 0)
 (check= (list-to-nat '(3)) 3)
@@ -168,7 +140,8 @@ unused functions:
 (check= (list-to-nat '(4 4 1 2 8)) 44128)
 
 ;; add the products of the corresponding digits along a single diagonal
-;; (refer to a diagram of Japanese multiplication for additional information)
+;; (refer to the step-by-step diagram of Japanese multiplication attached
+;;  to the accompanying paper to visualize this function)
 (definec mult-helper (val :nat l2 :lon length :nat) :nat
   (cond
    ((endp l2) 0)
@@ -191,38 +164,41 @@ unused functions:
 (check= (japanese-mult (list 0) (list 1 2 3)) 0)
 (check= (japanese-mult (list 7 2 4) (list 6 5 2 1)) 4721204)
 
+;; making sure the theorem we're trying to prove is not incorrect
 (test? (implies (and (lonp l1) (lonp l2))
-                (equal (japanese-mult l1 l2) (* (list-to-nat l1) 
-                                                (list-to-nat l2)))))
+                (equal (japanese-mult l1 l2)
+                       (* (list-to-nat l1) (list-to-nat l2)))))
 
 (set-gag-mode nil)
 
-;(defthm l1-is-zero
-;  (implies (and (equal (list 0) l1) (lonp l2))
-;           (equal (japanese-mult l1 l2) 0)))
+;; relates mult-helper to list-to-nat with arbitrary natural numbers
+(defthm mult-help-to-list-to-nat
+  (implies (and (natp x) (lonp l2) (natp y))
+           (equal (mult-helper x l2 y)
+                  (* x (list-to-nat l2) (expt 10 y)))))
 
-;(defthm l2-is-zero
-;  (implies (and (equal (list 0) l2) (lonp l1))
-;           (equal (japanese-mult l1 l2) 0)))
+;; relates mult-helper to list-to-nat with two lists of natural numbers
+(defthm mult-help-to-list-to-nat2
+  (implies (and (lonp l1)
+                (consp l1)
+                (lonp l2)
+                l2)
+           (equal (mult-helper (car l1) l2 (len (cdr l1)))
+                  (* (car l1) (expt 10 (1- (len l1)))
+                     (list-to-nat l2)))))
 
-
-;;previous implementation of list-to-nat
-;;not used
-(definec list-to-nat-rev (l :lon) :nat
-  (cond
-   ((endp l) 0)
-   (t (+ (car l) (* 10 (list-to-nat-rev (cdr l)))))))
-
-;;tried to prove list-to-nat so that ACL2s would see that it is true, leave it alone 
-;;and only focus on japanese mult
-(defthm list-to-nat-defthm
-  (implies (and (lonp l1) (lonp l2) (natp x) (natp y)
-                (equal (list-to-nat l1) x)
-                (equal (list-to-nat l2) y))
-           (equal (* (list-to-nat l1) (list-to-nat l2))
-                  (* x y))))
+;; overall defthm
+;; proves that our japanese-mult function is equivalent to multiplying
+;; two lists of natural numbers 
+(defthm japanese-multiplication
+  (implies (and (lonp l1) (lonp l2))
+           (equal (japanese-mult l1 l2)
+                  (* (list-to-nat l1) 
+                     (list-to-nat l2)))))
 
 #|
+Intermediary lemmas that later turned out to be unnecessary to prove the theorem
+
 (defthm endp-l2
   (implies (and (lonp l1) (lonp l2) (endp l2))
            (equal (japanese-mult l1 l2)
@@ -232,24 +208,7 @@ unused functions:
   (implies (AND (LONP L2) (natp x))
          (EQUAL (MULT-HELPER 0 L2 x)
                 0)))
-|#
-
-;;relates mult-helper to list-to-nat with arbitrary natural numbers
-(defthm mult-help-to-list-to-nat
-  (implies (and (natp x) (lonp l2) (natp y))
-           (equal (mult-helper x l2 y)
-                  (* x (list-to-nat l2) (expt 10 y)))))
-
-;;relates mult-helper to list-to-nat with two lists of natural numbers
-(defthm mult-help-to-list-to-nat2
-  (implies (and (lonp l1)
-                (consp l1)
-                (lonp l2)
-                l2)
-           (equal (mult-helper (car l1) l2 (len (cdr l1)))
-                  (* (car l1) (expt 10 (1- (len l1)))
-                     (list-to-nat l2)))))
-#|
+                
 (defthm testing2
   (IMPLIES (AND (lonp l1)
                 (CONSP L1)
@@ -270,77 +229,4 @@ unused functions:
            (equal (japanese-mult l1 l2)
                   (* (list-to-nat l1) 
                      (list-to-nat l2)))))
-|#
-
-;;overall defthm
-;;proves that our japanese-mult function is equivalent to multiplying
-;;two lists of natural numbers 
-(defthm japanese-multiplication
-  (implies (and (lonp l1) (lonp l2))
-           (equal (japanese-mult l1 l2)
-                  (* (list-to-nat l1) 
-                     (list-to-nat l2)))))
-#|
-;;tried to get rid of list-to-nat
-(defthm expand-japanese-mult
-  (implies (and (lonp l1) (lonp l2))
-           (equal (japanese-mult l1 l2)
-                  (* (mult-helper 1 l1 0) (mult-helper 1 l2 0)))))
-
-;;one of the subgoals that ACL2 failed at
-(skip-proofs
- (defthm test
-   (IMPLIES (AND (EQUAL (CAR L1) 0)
-              (LONP (CDR L1))
-              (CONSP L1)
-              (EQUAL (japanese-mult (CDR L1) L2)
-                     (* (LIST-TO-NAT L2)
-                        (LIST-TO-NAT (CDR L1))))
-              (LONP L2))
-         (EQUAL (mult-helper 0 L2 (LEN (CDR L1)))
-                0))))
-
-(test? (implies (and (lonp l1) (lonp l2))
-                (equal (japanese-mult l1 l2) (* (list-to-nat l1) 
-                                                (list-to-nat l2)))))
-;;same thing as above, just a different one
-(defthm groupme
-  (IMPLIES (AND (NOT (ENDP L1))
-                (EQUAL (japanese-mult (CDR L1) L2)
-                       (* (LIST-TO-NAT (CDR L1))
-                          (LIST-TO-NAT L2)))
-                (LONP L1)
-                (LONP L2))
-           (EQUAL (japanese-mult L1 L2)
-                  (* (LIST-TO-NAT L1) (LIST-TO-NAT L2))))
-  :hints (("Goal" :hands-off list-to-nat)))
-
-;;same as above, expands list-to-nat which we want to avoid because 
-;;we don't think proving list-to-nat is useful when trying to prove japanese-mult
-;;i.e., list-to-nat has nothing to do with the main proof.
-(defthm placeholder
-  (implies (and (less-than-tenp n)
-                (equal (car l1) n)
-                (lonp (cdr l1))
-                (consp l1)
-                (equal (japanese-mult (cdr l1) l2)
-                       (* (list-to-nat l2)
-                          (list-to-nat (cdr l1))))
-                (lonp l2))
-           (equal (mult-helper n l2 (len (cdr l1)))
-                  (* n (list-to-nat l2)
-                     (expt 10 (len (cdr l1))))))
-  :hints (("Subgoal *1/" :hands-off (list-to-nat l1))))
-
-;;main theorem of japanese-mult
-(defthm japanese-multiplication
-  (implies (and (lonp l1) (lonp l2))
-           (equal (japanese-mult l1 l2)
-                  (* (list-to-nat l1) 
-                     (list-to-nat l2)))))
-
-;(defthm japanese-multiplication-rev2
-;  (implies (and (lonp l1) (lonp l2))
-;           (equal (japanese-mult l1 l2) (* (list-to-nat (rev2 l1))
-;                                        (list-to-nat (rev2 l2))))))
 |#
