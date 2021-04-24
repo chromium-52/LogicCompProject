@@ -171,14 +171,15 @@ l2 = (list 3 4)
 
 (set-gag-mode nil)
 
-;; relates mult-helper to list-to-nat with arbitrary natural numbers
-(defthm mult-help-to-list-to-nat
+;; relates mult-helper to list-to-nat with arbitrary natural numbers,
+;;primary purpose is to simplify mult-help-to-list-to-nat's claim
+(defthm mult-help-to-list-to-nat-helper
   (implies (and (natp x) (lonp l2) (natp y))
            (equal (mult-helper x l2 y)
                   (* x (list-to-nat l2) (expt 10 y)))))
 
 ;; relates mult-helper to list-to-nat with two lists of natural numbers
-(defthm mult-help-to-list-to-nat2
+(defthm mult-help-to-list-to-nat
   (implies (and (lonp l1)
                 (consp l1)
                 (lonp l2)
