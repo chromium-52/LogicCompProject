@@ -124,10 +124,10 @@ l2 = (list 3 4)
 ;; one-digit natural number
 (defdata less-than-ten (oneof 0 1 2 3 4 5 6 7 8 9))
 ;; list of naturals
-(defdata lon (listof less-than-ten))
+(defdata loltn (listof less-than-ten))
 
 ;; convert the given lon to a natural
-(definec list-to-nat (l :lon) :nat
+(definec list-to-nat (l :loltn) :nat
   (cond
    ((endp l) 0)
    (t (+ (* (car l) (expt 10 (1- (len l))))
@@ -142,7 +142,7 @@ l2 = (list 3 4)
 ;; add the products of the corresponding digits along a single diagonal
 ;; (refer to the step-by-step diagram of Japanese multiplication attached
 ;;  to the accompanying paper to visualize this function)
-(definec mult-helper (val :nat l2 :lon length :nat) :nat
+(definec mult-helper (val :nat l2 :loltn length :nat) :nat
   (cond
    ((endp l2) 0)
    (t (+ (* val (car l2) (expt 10 (+ length (1- (len l2)))))
@@ -153,7 +153,7 @@ l2 = (list 3 4)
 (check= (mult-helper 3 (list 2 1 1) 0) 633)
 
 ;; add the values of all individual diagonals
-(definec japanese-mult (l1 :lon l2 :lon) :nat
+(definec japanese-mult (l1 :loltn l2 :loltn) :nat
   (cond
    ((endp l1) 0)
    (t (+ (mult-helper (car l1) l2 (1- (len l1)))
@@ -174,15 +174,15 @@ l2 = (list 3 4)
 ;; relates mult-helper to list-to-nat with arbitrary natural numbers,
 ;;primary purpose is to simplify mult-help-to-list-to-nat's claim
 (defthm mult-help-to-list-to-nat-helper
-  (implies (and (natp x) (lonp l2) (natp y))
+  (implies (and (natp x) (loltnp l2) (natp y))
            (equal (mult-helper x l2 y)
                   (* x (list-to-nat l2) (expt 10 y)))))
 
 ;; relates mult-helper to list-to-nat with two lists of natural numbers
 (defthm mult-help-to-list-to-nat
-  (implies (and (lonp l1)
+  (implies (and (loltnp l1)
                 (consp l1)
-                (lonp l2)
+                (loltnp l2)
                 l2)
            (equal (mult-helper (car l1) l2 (len (cdr l1)))
                   (* (car l1) (expt 10 (1- (len l1)))
@@ -192,7 +192,7 @@ l2 = (list 3 4)
 ;; proves that our japanese-mult function is equivalent to multiplying
 ;; two lists of natural numbers 
 (defthm japanese-multiplication
-  (implies (and (lonp l1) (lonp l2))
+  (implies (and (loltnp l1) (loltnp l2))
            (equal (japanese-mult l1 l2)
                   (* (list-to-nat l1) 
                      (list-to-nat l2)))))
@@ -201,22 +201,22 @@ l2 = (list 3 4)
 Intermediary lemmas that later turned out to be unnecessary to prove the theorem
 
 (defthm endp-l2
-  (implies (and (lonp l1) (lonp l2) (endp l2))
+  (implies (and (loltnp l1) (loltnp l2) (endp l2))
            (equal (japanese-mult l1 l2)
                   0)))
 
 (defthm mult-help-0
-  (implies (AND (LONP L2) (natp x))
+  (implies (AND (loltnp L2) (natp x))
          (EQUAL (MULT-HELPER 0 L2 x)
                 0)))
                 
 (defthm testing2
-  (IMPLIES (AND (lonp l1)
+  (IMPLIES (AND (loltnp l1)
                 (CONSP L1)
                 (EQUAL (JAPANESE-MULT (CDR L1) L2)
                        (* (LIST-TO-NAT L2)
                           (LIST-TO-NAT (CDR L1))))
-                (LONP L2)
+                (loltnp L2)
                 L2)
            (EQUAL (+ (JAPANESE-MULT (CDR L1) L2)
                      (MULT-HELPER (car l1) L2 (LEN (CDR L1))))
@@ -226,7 +226,7 @@ Intermediary lemmas that later turned out to be unnecessary to prove the theorem
                         (LIST-TO-NAT L2))))))
 
 (defthm consp-l2
-  (implies (and (lonp l1) (lonp l2) (consp l2))
+  (implies (and (loltnp l1) (loltnp l2) (consp l2))
            (equal (japanese-mult l1 l2)
                   (* (list-to-nat l1) 
                      (list-to-nat l2)))))
